@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Proportion Wheel</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --text: #333333;
+    --text-muted: #888888;
+    --border: #f1f1f1;
+    --th-bg: #414242;
+    --th-text: #f7f7f7;
+    --input-focus: #e6e6e6;
+    --btn: #3498db;
+    --btn-hover: #2980b9;
+    --danger: #e74c3c;
+    --danger-hover: #c0392b;
+    --shadow: rgba(0,0,0,.08);
+    --ok: #2ecc71;
+    --warn: #e67e22;
+    --skip: #f39c12;
+    --skip-hover: #e67e22;
+  }
+
+  html[data-theme="dark"] {
+    --bg: #1e1f22;
+    --panel: #2a2c30;
+    --text: #eaeaea;
+    --text-muted: #9aa0a6;
+    --border: #3a3d42;
+    --th-bg: #15161a;
+    --th-text: #eaeaea;
+    --input-focus: #3a3d42;
+    --btn: #3b82f6;
+    --btn-hover: #2563eb;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --shadow: rgba(0,0,0,.4);
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --skip: #f59e0b;
+    --skip-hover: #d97706;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    transition: background .25s, color .25s;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Topbar ---------- */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .topbar h1 { font-size: 20px; margin: 0; font-weight: 600; }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .theme-toggle:hover { background: var(--input-focus); }
+
+  /* ---------- Mode switch ---------- */
+  .mode-switch {
+    display: inline-flex;
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .mode-btn {
+    padding: 8px 18px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all .2s;
+  }
+  .mode-btn.active { background: var(--btn); color: #fff; }
+
+  /* =========================================================
+     Responsive main layout
+     ========================================================= */
+  .main-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .left-col,
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  /* Wide screens: two columns */
+  @media (min-width: 1024px) {
+    .main-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "left right"
+        "preview preview";
+      gap: 24px 32px;
+      align-items: start;
+    }
+    .left-col { grid-area: left; }
+    .right-col { grid-area: right; }
+    .preview { grid-area: preview; }
+  }
+
+  /* ---------- Table ---------- */
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: background .25s;
+  }
+  th, td { border: 1px solid var(--border); padding: 0; }
+  th {
+    background: var(--th-bg);
+    color: var(--th-text);
+    padding: 10px;
+    font-weight: 500;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  td input[type="text"],
+  td input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    background: transparent;
+    color: var(--text);
+  }
+  td input:focus { background: var(--input-focus); }
+
+  td input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  td input[type="number"]::-webkit-outer-spin-button,
+  td input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  td input[type="color"] {
+    width: 100%;
+    height: 42px;
+    padding: 4px;
+    border: none;
+    outline: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .percent-wrap {
+    display: flex;
+    align-items: center;
+    padding-right: 10px;
+  }
+  .percent-wrap input { flex: 1; }
+  .percent-wrap span { color: var(--text-muted); font-size: 14px; }
+
+  /* ---------- Buttons ---------- */
+  .actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--btn);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  button:hover { background: var(--btn-hover); }
+  button.danger { background: var(--danger); }
+  button.danger:hover { background: var(--danger-hover); }
+  button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.secondary:hover { background: var(--input-focus); }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+
+  /* ---------- Summary ---------- */
+  .summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+  .summary .total { font-weight: 600; font-size: 16px; }
+  .summary .total.ok { color: var(--ok); }
+  .summary .total.warn { color: var(--warn); }
+
+  /* ---------- Storage ---------- */
+  .storage-section {
+    padding: 18px 20px;
+    background: var(--panel);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: background .25s;
+  }
+  .storage-section h2 {
+    font-size: 15px;
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+  .storage-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .storage-row input[type="text"] {
+    flex: 1;
+    min-width: 160px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+  }
+  .storage-row input[type="text"]:focus { border-color: var(--btn); }
+
+  .slot-list {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .slot-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px 6px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+  }
+  .slot-item .slot-name {
+    cursor: pointer;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .slot-item .slot-name:hover { color: var(--btn); }
+  .slot-item .slot-del {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slot-item .slot-del:hover {
+    background: var(--danger);
+    color: #fff;
+  }
+  .empty-slots {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* ---------- Wheel ---------- */
+  .wheel-section {
+    padding: 16px;
+    background: var(--panel);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow);
+    text-align: center;
+    transition: background .25s;
+  }
+  .wheel-section h2 {
+    font-size: 16px;
+    margin: 0 0 16px;
+    font-weight: 600;
+  }
+
+  /* Wheel + Spin button row */
+  .wheel-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .wheel-container {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  #wheelCanvas {
+    display: block;
+    border-radius: 50%;
+    box-shadow: 0 6px 24px rgba(0,0,0,.18);
+    cursor: crosshair;
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  .wheel-pointer {
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 38px;
+    color: #e74c3c;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.35));
+    z-index: 10;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  /* Spin / Skip slot — fixed size so swap never jumps */
+  .spin-buttons {
+    position: relative;
+    display: inline-block;
+    min-width: 170px;
+    height: 48px;
+  }
+  .spin-buttons button {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+    padding: 0 24px;
+  }
+  #skipBtn {
+    background: var(--skip);
+  }
+  #skipBtn:hover {
+    background: var(--skip-hover);
+  }
+
+  /* Very wide: put Spin button to the right of the wheel */
+  @media (min-width: 1400px) {
+    .wheel-row {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+    .wheel-container {
+      flex: 0 1 400px;
+      min-width: 0;
+    }
+    .spin-buttons {
+      flex: 0 0 auto;
+    }
+  }
+
+  .wheel-result {
+    margin-top: 18px;
+    font-size: 16px;
+    min-height: 26px;
+    color: var(--text);
+  }
+
+  /* Tooltip */
+  .wheel-tooltip {
+    position: absolute;
+    padding: 6px 12px;
+    background: rgba(20, 20, 25, .92);
+    color: #fff;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(-10px);
+    transition: opacity .18s;
+    z-index: 20;
+    box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wheel-tooltip.show { opacity: 1; }
+  .wheel-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(20, 20, 25, .92);
+  }
+
+  /* ---------- Preview ---------- */
+  .preview {
+    padding: 12px 16px;
+    background: var(--panel);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: background .25s;
+    font-family: ui-monospace, monospace;
+    overflow-x: auto;
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <h1>🎡 Proportion Wheel</h1>
+    <button class="theme-toggle" id="themeToggle">
+      <span id="themeIcon">🌙</span>
+      <span id="themeText">Dark Mode</span>
+    </button>
+  </div>
+
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="percent">Percentage</button>
+    <button class="mode-btn" data-mode="fraction">Fraction</button>
+  </div>
+
+  <div class="main-layout">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-col">
+      <div class="table-wrapper">
+        <table id="myTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Color</th>
+              <th id="col3Header">Proportion (%)</th>
+              <th style="width:80px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button id="addRowBtn">Add Row</button>
+        <button id="balanceBtn" class="secondary">⚖️ Balance to 100%</button>
+        <button id="clearBtn" class="danger">Clear All</button>
+      </div>
+
+      <div class="summary">
+        <span>Total:</span>
+        <span class="total" id="totalDisplay">0%</span>
+        <span id="totalHint"></span>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+      <div class="storage-section">
+        <h2>💾 Saved Wheels (temporary storage)</h2>
+        <div class="storage-row">
+          <input type="text" id="slotName" placeholder="Enter a name to save this wheel...">
+          <button id="saveSlotBtn">Save</button>
+        </div>
+        <div class="slot-list" id="slotList"></div>
+      </div>
+
+      <div class="wheel-section">
+        <h2>🎡 Lucky Wheel</h2>
+        <div class="wheel-row">
+          <div class="wheel-container" id="wheelContainer">
+            <div class="wheel-pointer">▼</div>
+            <canvas id="wheelCanvas" width="400" height="400"></canvas>
+            <div class="wheel-tooltip" id="wheelTooltip"></div>
+          </div>
+          <div class="spin-buttons">
+            <button id="spinBtn">🎲 Spin</button>
+            <button id="skipBtn" style="display:none;">⏩ Skip</button>
+          </div>
+        </div>
+        <div class="wheel-result" id="wheelResult">Click Spin to start</div>
+      </div>
+    </div>
+
+    <!-- PREVIEW spans both columns -->
+    <div class="preview" id="preview">Preview: {}</div>
+
+  </div>
+
+<script>
+/* =========================================================
+   0. Theme
+   ========================================================= */
+const THEME_KEY = 'wheel-theme';
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const icon = document.getElementById('themeIcon');
+  const text = document.getElementById('themeText');
+  if (theme === 'dark') {
+    icon.textContent = '☀️';
+    text.textContent = 'Light Mode';
+  } else {
+    icon.textContent = '🌙';
+    text.textContent = 'Dark Mode';
+  }
+}
+
+(function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved) applyTheme(saved);
+  else applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+})();
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem(THEME_KEY, next);
+  drawWheel();
+});
+
+/* =========================================================
+   1. Global state
+   ========================================================= */
+const tableData = [];
+let mode = 'percent';
+
+/* =========================================================
+   2. Color utilities
+   ========================================================= */
+function hexToRgb(hex) {
+  const h = String(hex || '#000').replace('#', '');
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  return {
+    r: parseInt(full.substring(0, 2), 16) || 0,
+    g: parseInt(full.substring(2, 4), 16) || 0,
+    b: parseInt(full.substring(4, 6), 16) || 0
+  };
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x => {
+    const v = Math.max(0, Math.min(255, Math.round(x)));
+    return v.toString(16).padStart(2, '0');
+  }).join('');
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360 / 360;
+  s /= 100; l /= 100;
+  let r, g, b;
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  return { r: r * 255, g: g * 255, b: b * 255 };
+}
+
+function hexToHsl(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHsl(r, g, b);
+}
+
+function hslToHex(hsl) {
+  const { r, g, b } = hslToRgb(hsl.h, hsl.s, hsl.l);
+  return rgbToHex(r, g, b);
+}
+
+function hueDistance(h1, h2) {
+  const d = Math.abs(h1 - h2) % 360;
+  return Math.min(d, 360 - d);
+}
+
+function isSimilar(a, b) {
+  if (a.s < 14 && b.s < 14) {
+    return Math.abs(a.l - b.l) < 22;
+  }
+  if (a.s < 14 || b.s < 14) return false;
+  return hueDistance(a.h, b.h) < 26;
+}
+
+function ensureDistinctColors() {
+  if (tableData.length < 2) return;
+
+  const used = [];
+  const rows = document.getElementById('tableBody').children;
+
+  for (let i = 0; i < tableData.length; i++) {
+    let hsl = hexToHsl(tableData[i].col2);
+    let attempts = 0;
+
+    while (used.some(u => isSimilar(hsl, u)) && attempts < 24) {
+      hsl.h = (hsl.h + 31) % 360;
+      if (hsl.s < 20) hsl.s = Math.min(100, hsl.s + 20);
+      attempts++;
+    }
+
+    used.push({ h: hsl.h, s: hsl.s, l: hsl.l });
+
+    const newHex = hslToHex(hsl);
+    if (newHex.toLowerCase() !== String(tableData[i].col2).toLowerCase()) {
+      tableData[i].col2 = newHex;
+      const input = rows[i] && rows[i].querySelector('input[data-key="col2"]');
+      if (input) input.value = newHex;
+    }
+  }
+}
+
+/* =========================================================
+   3. Fraction utilities
+   ========================================================= */
+function gcd(a, b) {
+  a = Math.abs(a); b = Math.abs(b);
+  while (b) { [a, b] = [b, a % b]; }
+  return a || 1;
+}
+
+function toFraction(value) {
+  if (!value || value === 0) return '0/1';
+  if (Number.isInteger(value)) {
+    const g = gcd(Math.round(value), 100);
+    return `${Math.round(value) / g}/${100 / g}`;
+  }
+  return `${+value.toFixed(2)}/100`;
+}
+
+function parseFraction(str) {
+  if (str === null || str === undefined) return 0;
+  str = String(str).trim();
+  if (!str) return 0;
+
+  if (str.includes('/')) {
+    const parts = str.split('/').map(s => s.trim());
+    const a = parseFloat(parts[0]);
+    const b = parseFloat(parts[1]);
+    if (!isNaN(a) && !isNaN(b) && b !== 0) {
+      return Math.max(0, (a / b) * 100);
+    }
+    return 0;
+  }
+  const n = parseFloat(str);
+  return isNaN(n) ? 0 : Math.max(0, n);
+}
+
+/* =========================================================
+   4. Row creation
+   ========================================================= */
+function createRow(data = { col1: '', col2: '#3498db', col3: 0 }) {
+  const tr = document.createElement('tr');
+
+  /* ----- Column 1: Name ----- */
+  {
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = data.col1 || '';
+    input.placeholder = 'Enter name...';
+    input.dataset.key = 'col1';
+
+    input.addEventListener('input', () => {
+      const index = [...tr.parentNode.children].indexOf(tr);
+      tableData[index].col1 = input.value;
+      updatePreview();
+      drawWheel();
+    });
+
+    td.appendChild(input);
+    tr.appendChild(td);
+  }
+
+  /* ----- Column 2: Color ----- */
+  {
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = data.col2 || '#3498db';
+    input.dataset.key = 'col2';
+
+    input.addEventListener('input', () => {
+      const index = [...tr.parentNode.children].indexOf(tr);
+      tableData[index].col2 = input.value;
+      updatePreview();
+      drawWheel();
+    });
+
+    input.addEventListener('change', () => {
+      ensureDistinctColors();
+      updatePreview();
+      drawWheel();
+    });
+
+    td.appendChild(input);
+    tr.appendChild(td);
+  }
+
+  /* ----- Column 3: Proportion ----- */
+  {
+    const td = document.createElement('td');
+    const wrap = document.createElement('div');
+    wrap.className = 'percent-wrap';
+
+    const input = document.createElement('input');
+    input.dataset.key = 'col3';
+
+    if (mode === 'percent') {
+      input.type = 'number';
+      input.min = '0';
+      input.step = 'any';
+      input.value = data.col3 ?? 0;
+      input.placeholder = '0-100';
+
+      input.addEventListener('input', () => {
+        let val = parseFloat(input.value);
+        if (isNaN(val)) val = 0;
+        if (val < 0) val = 0;
+        const index = [...tr.parentNode.children].indexOf(tr);
+        tableData[index].col3 = val;
+        updatePreview();
+        drawWheel();
+      });
+
+      input.addEventListener('blur', () => {
+        let val = parseFloat(input.value);
+        if (isNaN(val)) val = 0;
+        if (val < 0) val = 0;
+        input.value = val;
+        const index = [...tr.parentNode.children].indexOf(tr);
+        tableData[index].col3 = val;
+        updatePreview();
+        drawWheel();
+      });
+    } else {
+      input.type = 'text';
+      input.value = toFraction(data.col3 ?? 0);
+      input.placeholder = 'e.g. 3/10';
+
+      input.addEventListener('input', () => {
+        const val = parseFraction(input.value);
+        const index = [...tr.parentNode.children].indexOf(tr);
+        tableData[index].col3 = val;
+        updatePreview();
+        drawWheel();
+      });
+
+      input.addEventListener('blur', () => {
+        const val = parseFraction(input.value);
+        const index = [...tr.parentNode.children].indexOf(tr);
+        tableData[index].col3 = val;
+        updatePreview();
+        drawWheel();
+      });
+    }
+
+    const unit = document.createElement('span');
+    unit.textContent = mode === 'percent' ? '%' : '';
+
+    wrap.appendChild(input);
+    wrap.appendChild(unit);
+    td.appendChild(wrap);
+    tr.appendChild(td);
+  }
+
+  /* ----- Delete button ----- */
+  {
+    const td = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Delete';
+    delBtn.className = 'danger';
+    delBtn.style.padding = '6px 10px';
+    delBtn.style.fontSize = '12px';
+
+    delBtn.addEventListener('click', () => {
+      const index = [...tr.parentNode.children].indexOf(tr);
+      tableData.splice(index, 1);
+      tr.remove();
+      ensureDistinctColors();
+      updatePreview();
+      drawWheel();
+    });
+
+    td.appendChild(delBtn);
+    tr.appendChild(td);
+  }
+
+  return tr;
+}
+
+/* =========================================================
+   5. Add / rerender rows
+   ========================================================= */
+function randomColor() {
+  const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e84393', '#00b894'];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function addRow(data) {
+  const rowData = data || { col1: '', col2: randomColor(), col3: 0 };
+  tableData.push(rowData);
+  document.getElementById('tableBody').appendChild(createRow(rowData));
+  ensureDistinctColors();
+  updatePreview();
+  drawWheel();
+  scheduleAutoSave();
+}
+
+function rerenderAllRows() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  tableData.forEach(row => tbody.appendChild(createRow(row)));
+  drawWheel();
+}
+
+/* =========================================================
+   6. Balance to 100%
+   ========================================================= */
+function balanceTo100() {
+  if (tableData.length === 0) return;
+
+  const total = tableData.reduce((s, r) => s + (r.col3 || 0), 0);
+  let newValues;
+
+  if (total <= 0) {
+    const base = Math.floor(100 / tableData.length);
+    newValues = tableData.map(() => base);
+  } else {
+    newValues = tableData.map(r => Math.round((r.col3 / total) * 100));
+  }
+
+  let sum = newValues.reduce((s, v) => s + v, 0);
+  const diff = 100 - sum;
+
+  if (diff !== 0) {
+    let targetIndex = 0;
+    let maxVal = -Infinity;
+    newValues.forEach((v, i) => {
+      if (v > maxVal) { maxVal = v; targetIndex = i; }
+    });
+    newValues[targetIndex] += diff;
+    if (newValues[targetIndex] < 0) newValues[targetIndex] = 0;
+  }
+
+  const rows = document.getElementById('tableBody').children;
+  tableData.forEach((row, i) => {
+    row.col3 = newValues[i];
+    const input = rows[i].querySelector('input[data-key="col3"]');
+    if (input) input.value = mode === 'percent' ? newValues[i] : toFraction(newValues[i]);
+  });
+
+  updatePreview();
+  drawWheel();
+  scheduleAutoSave();
+}
+
+/* =========================================================
+   7. Preview + total
+   ========================================================= */
+function updatePreview() {
+  const total = tableData.reduce((s, r) => s + (r.col3 || 0), 0);
+  const totalEl = document.getElementById('totalDisplay');
+  const hintEl = document.getElementById('totalHint');
+
+  totalEl.textContent = total.toFixed(total % 1 === 0 ? 0 : 2) + '%';
+
+  if (Math.abs(total - 100) < 0.001) {
+    totalEl.className = 'total ok';
+    hintEl.textContent = '✓ exactly 100%';
+  } else {
+    totalEl.className = 'total warn';
+    hintEl.textContent = total > 100 ? '⚠ over 100%' : '⚠ under 100%';
+  }
+
+  document.getElementById('preview').textContent =
+    'Preview:\n' + JSON.stringify(tableData, null, 2);
+}
+
+/* =========================================================
+   8. Mode switch
+   ========================================================= */
+function setMode(newMode) {
+  if (mode === newMode) return;
+  mode = newMode;
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+
+  document.getElementById('col3Header').textContent =
+    mode === 'percent' ? 'Proportion (%)' : 'Proportion (a/b)';
+
+  rerenderAllRows();
+  updatePreview();
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => setMode(btn.dataset.mode));
+});
+
+/* =========================================================
+   9. Wheel drawing
+   ========================================================= */
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+const SIZE = 400;
+const PADDING = 24;
+const RADIUS = SIZE / 2 - PADDING;
+
+(function setupCanvasDPR() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = SIZE * dpr;
+  canvas.height = SIZE * dpr;
+  // CSS width/height are handled by stylesheet (max-width: 100%)
+  canvas.style.width = SIZE + 'px';
+  canvas.style.height = SIZE + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+})();
+
+let rotation = 0;
+let spinning = false;
+
+function getTotal() {
+  return tableData.reduce((s, r) => s + (r.col3 || 0), 0);
+}
+
+function truncateText(text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth) {
+    t = t.slice(0, -1);
+  }
+  return t + '…';
+}
+
+function drawWheel() {
+  const cx = SIZE / 2;
+  const cy = SIZE / 2;
+
+  ctx.clearRect(0, 0, SIZE, SIZE);
+
+  const panelColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--panel').trim() || '#fff';
+  ctx.beginPath();
+  ctx.arc(cx, cy, RADIUS + 8, 0, Math.PI * 2);
+  ctx.fillStyle = panelColor;
+  ctx.fill();
+
+  const total = getTotal();
+
+  if (tableData.length === 0 || total <= 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = '#d0d0d0';
+    ctx.fill();
+
+    ctx.fillStyle = '#888';
+    ctx.font = '16px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('No data', cx, cy);
+    drawCenter(cx, cy);
+    return;
+  }
+
+  let cumulative = 0;
+
+  tableData.forEach((row, i) => {
+    const sliceAngle = ((row.col3 || 0) / total) * Math.PI * 2;
+    if (sliceAngle <= 0.0001) {
+      cumulative += sliceAngle;
+      return;
+    }
+
+    const start = cumulative + rotation;
+    const end = start + sliceAngle;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, RADIUS, start, end);
+    ctx.closePath();
+    ctx.fillStyle = row.col2 || '#3498db';
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    if (sliceAngle > 0.14) {
+      const midAngle = start + sliceAngle / 2;
+      const labelR = RADIUS * 0.63;
+      const lx = cx + Math.cos(midAngle) * labelR;
+      const ly = cy + Math.sin(midAngle) * labelR;
+
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.75)';
+      ctx.shadowBlur = 5;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 1;
+
+      const maxWidth = RADIUS * 0.52;
+      const name = row.col1 || `Item ${i + 1}`;
+      const label = truncateText(name, maxWidth);
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+    }
+
+    cumulative += sliceAngle;
+  });
+
+  drawCenter(cx, cy);
+}
+
+function drawCenter(cx, cy) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, 42, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('GO', cx, cy);
+}
+
+/* =========================================================
+   10. Hover detection + tooltip (1 second delay)
+   ========================================================= */
+const tooltipEl = document.getElementById('wheelTooltip');
+const wheelContainer = document.getElementById('wheelContainer');
+let hoverTimer = null;
+let hoverIndex = -1;
+
+function getSectorAt(canvasX, canvasY) {
+  const cx = SIZE / 2;
+  const cy = SIZE / 2;
+  const dx = canvasX - cx;
+  const dy = canvasY - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist > RADIUS) return -1;
+
+  const total = getTotal();
+  if (total <= 0 || tableData.length === 0) return -1;
+
+  let angle = Math.atan2(dy, dx) - rotation;
+  angle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+  let cumulative = 0;
+  for (let i = 0; i < tableData.length; i++) {
+    const sa = ((tableData[i].col3 || 0) / total) * Math.PI * 2;
+    if (angle >= cumulative && angle < cumulative + sa) return i;
+    cumulative += sa;
+  }
+  return -1;
+}
+
+function showTooltip(index, clientX, clientY) {
+  const row = tableData[index];
+  if (!row) return;
+
+  const cRect = wheelContainer.getBoundingClientRect();
+  const x = clientX - cRect.left;
+  const y = clientY - cRect.top;
+
+  tooltipEl.textContent = row.col1 || `Item ${index + 1}`;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+  tooltipEl.classList.add('show');
+}
+
+function hideTooltip() {
+  tooltipEl.classList.remove('show');
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  if (spinning) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = SIZE / rect.width;
+  const scaleY = SIZE / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+
+  const idx = getSectorAt(x, y);
+
+  if (idx !== hoverIndex) {
+    hoverIndex = idx;
+    clearTimeout(hoverTimer);
+    hideTooltip();
+
+    if (idx >= 0) {
+      const cx = e.clientX;
+      const cy = e.clientY;
+      hoverTimer = setTimeout(() => {
+        if (hoverIndex === idx) showTooltip(idx, cx, cy);
+      }, 1000);
+    }
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoverIndex = -1;
+  clearTimeout(hoverTimer);
+  hideTooltip();
+});
+
+/* =========================================================
+   11. Spin / Skip logic
+   ========================================================= */
+const spinBtn = document.getElementById('spinBtn');
+const skipBtn = document.getElementById('skipBtn');
+
+let currentSpin = null;
+
+function getResultIndex() {
+  const total = getTotal();
+  if (total <= 0) return -1;
+
+  const pointerAngle = -Math.PI / 2;
+  let target = pointerAngle - rotation;
+  target = ((target % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+  let cumulative = 0;
+  for (let i = 0; i < tableData.length; i++) {
+    const sa = ((tableData[i].col3 || 0) / total) * Math.PI * 2;
+    if (target >= cumulative && target < cumulative + sa) return i;
+    cumulative += sa;
+  }
+  return tableData.length - 1;
+}
+
+function spinWheel() {
+  if (spinning) return;
+
+  const total = getTotal();
+  if (tableData.length === 0 || total <= 0) {
+    document.getElementById('wheelResult').textContent = '⚠️ Please enter valid proportions first';
+    return;
+  }
+
+  spinning = true;
+
+  spinBtn.style.display = 'none';
+  skipBtn.style.display = '';
+
+  document.getElementById('wheelResult').textContent = '🌀 Spinning...';
+  hideTooltip();
+  clearTimeout(hoverTimer);
+
+  const startRotation = rotation;
+  const extraTurns = 5 + Math.random() * 5;
+  const randomAngle = Math.random() * Math.PI * 2;
+  const targetRotation = startRotation + extraTurns * Math.PI * 2 + randomAngle;
+
+  const duration = 4200;
+  const startTime = performance.now();
+
+  currentSpin = {
+    startRotation,
+    targetRotation,
+    startTime,
+    duration,
+    rafId: null,
+    finished: false
+  };
+
+  function animate(now) {
+    if (!currentSpin || currentSpin.finished) return;
+
+    const t = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    rotation = startRotation + (targetRotation - startRotation) * eased;
+    drawWheel();
+
+    if (t < 1) {
+      currentSpin.rafId = requestAnimationFrame(animate);
+    } else {
+      finishSpin();
+    }
+  }
+
+  currentSpin.rafId = requestAnimationFrame(animate);
+}
+
+function finishSpin() {
+  if (!currentSpin || currentSpin.finished) return;
+  currentSpin.finished = true;
+  currentSpin = null;
+
+  spinning = false;
+  spinBtn.style.display = '';
+  skipBtn.style.display = 'none';
+  hoverIndex = -1;
+  showResult();
+}
+
+function skipSpin() {
+  if (!currentSpin || currentSpin.finished) return;
+
+  if (currentSpin.rafId) cancelAnimationFrame(currentSpin.rafId);
+
+  rotation = currentSpin.targetRotation;
+  drawWheel();
+  finishSpin();
+}
+
+function cancelSpin() {
+  if (!currentSpin) return;
+  if (currentSpin.rafId) cancelAnimationFrame(currentSpin.rafId);
+  currentSpin.finished = true;
+  currentSpin = null;
+  spinning = false;
+  spinBtn.style.display = '';
+  skipBtn.style.display = 'none';
+}
+
+function showResult() {
+  const idx = getResultIndex();
+  if (idx < 0) {
+    document.getElementById('wheelResult').textContent = 'No result';
+    return;
+  }
+
+  const row = tableData[idx];
+  const total = getTotal();
+  const pct = total > 0 ? ((row.col3 / total) * 100).toFixed(1) : '0';
+
+  document.getElementById('wheelResult').innerHTML =
+    `🎉 Result: <span style="color:${row.col2};font-weight:700;">${escapeHtml(row.col1 || 'Unnamed')}</span>
+     <span style="color:var(--text-muted);font-size:14px;">(actual share ${pct}%)</span>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/* =========================================================
+   12. Temporary storage system
+   ========================================================= */
+const SLOTS_KEY = 'wheel-saved-slots';
+const CURRENT_KEY = 'wheel-current-state';
+
+function getSlots() {
+  try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function writeSlots(slots) {
+  localStorage.setItem(SLOTS_KEY, JSON.stringify(slots));
+}
+
+function saveCurrentToSlot(name) {
+  name = String(name || '').trim();
+  if (!name) { alert('Please enter a name for this wheel.'); return; }
+
+  const slots = getSlots();
+  slots[name] = {
+    mode,
+    data: tableData.map(r => ({ col1: r.col1, col2: r.col2, col3: r.col3 })),
+    savedAt: Date.now()
+  };
+  writeSlots(slots);
+  renderSlots();
+  document.getElementById('slotName').value = '';
+}
+
+function loadSlot(name) {
+  const slots = getSlots();
+  const slot = slots[name];
+  if (!slot) return;
+
+  cancelSpin();
+  rotation = 0;
+
+  mode = slot.mode || 'percent';
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  document.getElementById('col3Header').textContent =
+    mode === 'percent' ? 'Proportion (%)' : 'Proportion (a/b)';
+
+  tableData.length = 0;
+  (slot.data || []).forEach(r => tableData.push({ col1: r.col1, col2: r.col2, col3: r.col3 }));
+
+  rerenderAllRows();
+  updatePreview();
+  drawWheel();
+  document.getElementById('wheelResult').textContent = `Loaded "${name}" — click Spin`;
+}
+
+function deleteSlot(name) {
+  const slots = getSlots();
+  delete slots[name];
+  writeSlots(slots);
+  renderSlots();
+}
+
+function renderSlots() {
+  const slots = getSlots();
+  const list = document.getElementById('slotList');
+  const names = Object.keys(slots);
+
+  if (names.length === 0) {
+    list.innerHTML = '<div class="empty-slots">No saved wheels yet.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  names.sort().forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'slot-item';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'slot-name';
+    nameEl.textContent = name;
+    nameEl.title = `Load "${name}"`;
+    nameEl.addEventListener('click', () => loadSlot(name));
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'slot-del';
+    delBtn.textContent = '×';
+    delBtn.title = 'Delete';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Delete saved wheel "${name}"?`)) deleteSlot(name);
+    });
+
+    item.appendChild(nameEl);
+    item.appendChild(delBtn);
+    list.appendChild(item);
+  });
+}
+
+let autoSaveTimer = null;
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    const state = {
+      mode,
+      data: tableData.map(r => ({ col1: r.col1, col2: r.col2, col3: r.col3 }))
+    };
+    try { localStorage.setItem(CURRENT_KEY, JSON.stringify(state)); }
+    catch (e) {}
+  }, 300);
+}
+
+function restoreCurrentState() {
+  try {
+    const raw = localStorage.getItem(CURRENT_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (!state || !Array.isArray(state.data)) return false;
+
+    mode = state.mode || 'percent';
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    document.getElementById('col3Header').textContent =
+      mode === 'percent' ? 'Proportion (%)' : 'Proportion (a/b)';
+
+    state.data.forEach(r => {
+      tableData.push({ col1: r.col1 || '', col2: r.col2 || '#3498db', col3: +r.col3 || 0 });
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* =========================================================
+   13. Buttons
+   ========================================================= */
+document.getElementById('addRowBtn').addEventListener('click', () => addRow());
+document.getElementById('balanceBtn').addEventListener('click', balanceTo100);
+spinBtn.addEventListener('click', spinWheel);
+skipBtn.addEventListener('click', skipSpin);
+
+document.getElementById('saveSlotBtn').addEventListener('click', () => {
+  saveCurrentToSlot(document.getElementById('slotName').value);
+});
+document.getElementById('slotName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    saveCurrentToSlot(document.getElementById('slotName').value);
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (tableData.length && !confirm('Clear all rows?')) return;
+  cancelSpin();
+  tableData.length = 0;
+  document.getElementById('tableBody').innerHTML = '';
+  rotation = 0;
+  updatePreview();
+  drawWheel();
+  document.getElementById('wheelResult').textContent = 'Click Spin to start';
+  scheduleAutoSave();
+});
+
+/* =========================================================
+   14. Init
+   ========================================================= */
+(function init() {
+  const restored = restoreCurrentState();
+
+  if (!restored) {
+    addRow({ col1: 'Option A', col2: '#3498db', col3: 30 });
+    addRow({ col1: 'Option B', col2: '#e74c3c', col3: 30 });
+    addRow({ col1: 'Option C', col2: '#2ecc71', col3: 40 });
+  } else {
+    rerenderAllRows();
+  }
+
+  ensureDistinctColors();
+  updatePreview();
+  drawWheel();
+  renderSlots();
+})();
+
+/* =========================================================
+   15. Expose for console
+   ========================================================= */
+window.tableData = tableData;
+window.addRow = addRow;
+window.updatePreview = updatePreview;
+window.balanceTo100 = balanceTo100;
+window.drawWheel = drawWheel;
+window.spinWheel = spinWheel;
+window.skipSpin = skipSpin;
+window.setMode = setMode;
+window.ensureDistinctColors = ensureDistinctColors;
+window.loadSlot = loadSlot;
+window.saveCurrentToSlot = saveCurrentToSlot;
+</script>
+</body>
+</html>
