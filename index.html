@@ -464,7 +464,7 @@
 <body>
 
   <div class="topbar">
-    <h1>🎡 Proportion Wheel</h1>
+    <h1>Proportion Wheel</h1>
     <button class="theme-toggle" id="themeToggle">
       <span id="themeIcon">🌙</span>
       <span id="themeText">Dark Mode</span>
@@ -496,7 +496,7 @@
 
       <div class="actions">
         <button id="addRowBtn">Add Row</button>
-        <button id="balanceBtn" class="secondary">⚖️ Balance to 100%</button>
+        <button id="balanceBtn" class="secondary">Balance to 100%</button>
         <button id="clearBtn" class="danger">Clear All</button>
       </div>
 
@@ -510,7 +510,7 @@
     <!-- RIGHT COLUMN -->
     <div class="right-col">
       <div class="storage-section">
-        <h2>💾 Saved Wheels (temporary storage)</h2>
+        <h2>Saved Wheels (temporary storage)</h2>
         <div class="storage-row">
           <input type="text" id="slotName" placeholder="Enter a name to save this wheel...">
           <button id="saveSlotBtn">Save</button>
@@ -519,7 +519,7 @@
       </div>
 
       <div class="wheel-section">
-        <h2>🎡 Lucky Wheel</h2>
+        <h2>Lucky Wheel</h2>
         <div class="wheel-row">
           <div class="wheel-container" id="wheelContainer">
             <div class="wheel-pointer">▼</div>
@@ -527,8 +527,8 @@
             <div class="wheel-tooltip" id="wheelTooltip"></div>
           </div>
           <div class="spin-buttons">
-            <button id="spinBtn">🎲 Spin</button>
-            <button id="skipBtn" style="display:none;">⏩ Skip</button>
+            <button id="spinBtn">Spin</button>
+            <button id="skipBtn" style="display:none;">Skip</button>
           </div>
         </div>
         <div class="wheel-result" id="wheelResult">Click Spin to start</div>
@@ -1236,7 +1236,7 @@ function spinWheel() {
   spinBtn.style.display = 'none';
   skipBtn.style.display = '';
 
-  document.getElementById('wheelResult').textContent = '🌀 Spinning...';
+  document.getElementById('wheelResult').textContent = 'Spinning...';
   hideTooltip();
   clearTimeout(hoverTimer);
 
